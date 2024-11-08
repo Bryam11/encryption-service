@@ -30,17 +30,17 @@ public class HybridEncryptionServiceImpl implements HybridEncryptionService {
     @Override
     public String encrypt(String plainText) {
         try {
-            // Generate a symmetric key
+            // Generacion de clave simetrica
             KeyGenerator keyGen = KeyGenerator.getInstance(SYMMETRIC_ALGORITHM);
             keyGen.init(256);
             SecretKey symmetricKey = keyGen.generateKey();
 
-            // Encrypt the data using the symmetric key
+            // Encriptar el texto plano usando la clave simetrica
             Cipher symmetricCipher = Cipher.getInstance(SYMMETRIC_ALGORITHM);
             symmetricCipher.init(Cipher.ENCRYPT_MODE, symmetricKey);
             byte[] encryptedData = symmetricCipher.doFinal(plainText.getBytes());
 
-            // Encrypt the symmetric key using the public key
+            // Encriptar la clave simetrica usando la clave publica
             byte[] publicKeyBytes = Base64.getDecoder().decode(publicKeyStr);
             X509EncodedKeySpec keySpec = new X509EncodedKeySpec(publicKeyBytes);
             KeyFactory keyFactory = KeyFactory.getInstance(ASYMMETRIC_ALGORITHM);
@@ -50,7 +50,7 @@ public class HybridEncryptionServiceImpl implements HybridEncryptionService {
             asymmetricCipher.init(Cipher.ENCRYPT_MODE, publicKey);
             byte[] encryptedKey = asymmetricCipher.doFinal(symmetricKey.getEncoded());
 
-            // Combine the encrypted data and the encrypted key
+            // Combinar la clave simetrica encriptada y los datos encriptados
             byte[] combined = new byte[encryptedKey.length + encryptedData.length];
             System.arraycopy(encryptedKey, 0, combined, 0, encryptedKey.length);
             System.arraycopy(encryptedData, 0, combined, encryptedKey.length, encryptedData.length);
@@ -66,13 +66,13 @@ public class HybridEncryptionServiceImpl implements HybridEncryptionService {
         try {
             byte[] combined = Base64.getDecoder().decode(encryptedText);
 
-            // Extract the encrypted symmetric key and the encrypted data
+            // Separar la clave simetrica encriptada y los datos encriptados
             byte[] encryptedKey = new byte[256]; // Assuming RSA 2048-bit key
             byte[] encryptedData = new byte[combined.length - 256];
             System.arraycopy(combined, 0, encryptedKey, 0, 256);
             System.arraycopy(combined, 256, encryptedData, 0, encryptedData.length);
 
-            // Decrypt the symmetric key using the private key
+            // Desencriptar la clave simetrica usando la clave privada
             byte[] privateKeyBytes = Base64.getDecoder().decode(privateKeyStr);
             KeyFactory keyFactory = KeyFactory.getInstance(ASYMMETRIC_ALGORITHM);
             PrivateKey privateKey = keyFactory.generatePrivate(new PKCS8EncodedKeySpec(privateKeyBytes));
@@ -82,7 +82,7 @@ public class HybridEncryptionServiceImpl implements HybridEncryptionService {
             byte[] symmetricKeyBytes = asymmetricCipher.doFinal(encryptedKey);
             SecretKey symmetricKey = new SecretKeySpec(symmetricKeyBytes, SYMMETRIC_ALGORITHM);
 
-            // Decrypt the data using the symmetric key
+            // Desencriptar los datos usando la clave simetrica
             Cipher symmetricCipher = Cipher.getInstance(SYMMETRIC_ALGORITHM);
             symmetricCipher.init(Cipher.DECRYPT_MODE, symmetricKey);
             byte[] decryptedData = symmetricCipher.doFinal(encryptedData);
